@@ -1,9 +1,158 @@
-<!-- In HTML Comments are written like this -->
-<!-- They can all be removed for your apps -->
-<!doctype html> <!-- This first line tells browsers to expect modern standard html 5 -->
-<html lang="en-gb"> <!-- This is indicates the page is written in British English, useful for accessibility -->
-<meta charset="utf-8"> <!-- This indicates how the file is encoded. utf-8 is standard -->
-<title>Your Web-app Title</title> <!-- All pages need a title, this will be displayed in the browser's title bar -->
-<link rel="stylesheet" href="default.css"> <!-- Import style sheet – default.css -->
-<link rel="icon" href="./assets/favicon.png"> <!-- Import 'Favorites Icon' – favicon.png -->
-<script type="module" src="main.js"></script> <!-- Load the main script. Must be type="module". Have only one of these -->
+<!doctype html>
+<!-- lang="en-gb" indicates British English — important for screen reader pronunciation -->
+<html lang="en-gb">
+<head>
+    <!-- utf-8 encoding supports all Unicode characters including emoji -->
+    <meta charset="utf-8">
+    <!-- viewport meta ensures correct scaling on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Page title shown in browser tab and used by screen readers -->
+    <title>Minesweeper</title>
+    <!-- Structural styles — colours, layout, animations -->
+    <link rel="stylesheet" href="default.css">
+</head>
+<body>
+
+    <!-- Intro screen — covers the full viewport on first load only.
+         Hidden via JS once the player has chosen a difficulty. -->
+    <div id="intro" aria-label="Game introduction">
+
+        <!-- Container for falling bomb animations — spawned by JS -->
+        <div id="intro-bombs"></div>
+
+        <!-- Animated title sequence: Welcome → to → MINESWEEPER -->
+        <div id="intro-text">
+            <div id="intro-welcome">Welcome</div>
+            <div id="intro-to">to</div>
+            <div id="intro-title">MINESWEEPER</div>
+        </div>
+
+        <!-- Revealed by JS after bombs finish falling -->
+        <button id="intro-start" aria-label="Start game">Start Game</button>
+
+    </div>
+
+    <!-- Difficulty picker — shown after Start Game and after New Game.
+         Positioned fixed and centred by CSS, shown/hidden by JS. -->
+    <div id="intro-difficulty" aria-label="Choose difficulty">
+        <p class="intro-diff-title">Choose Difficulty</p>
+        <!-- data attributes carry grid dimensions and mine count to JS -->
+        <div class="intro-diff-btns">
+            <button class="intro-diff-btn" data-rows="9" data-cols="9" data-mines="10">
+                Beginner
+            </button>
+            <button class="intro-diff-btn" data-rows="16" data-cols="16" data-mines="40">
+                Intermediate
+            </button>
+            <button class="intro-diff-btn" data-rows="16" data-cols="30" data-mines="99">
+                Expert
+            </button>
+        </div>
+    </div>
+
+    <!-- Main game interface — visible behind the intro overlay -->
+    <main class="app">
+
+        <!-- Page heading and tagline -->
+        <header class="header">
+            <h1 class="title">MINESWEEPER</h1>
+            <p class="subtitle">Clear the field. Trust nothing.</p>
+        </header>
+
+        <!-- Game controls — admit defeat button.
+             Switches to "New Game" mode after a loss. -->
+        <section class="controls" aria-label="Game controls">
+            <button class="admit-defeat-btn" id="admit-defeat-btn" aria-label="Admit defeat">
+                Admit Defeat
+            </button>
+        </section>
+
+        <!-- Status bar — mines remaining, current game status, elapsed time.
+             aria-live="polite" ensures status changes are announced to screen readers. -->
+        <section class="status-bar" aria-label="Game status">
+            <div class="stat" aria-label="Mines remaining">
+                <span class="stat-icon" aria-hidden="true">💣</span>
+                <span class="stat-value" id="mine-count">10</span>
+            </div>
+            <div class="game-status" id="game-status"
+                role="status" aria-live="polite" aria-atomic="true"></div>
+            <div class="stat" aria-label="Seconds elapsed">
+                <span class="stat-icon" aria-hidden="true">⏱</span>
+                <span class="stat-value" id="timer">0</span>
+            </div>
+        </section>
+
+        <!-- Game board — cell buttons injected dynamically by main.js.
+             role="grid" supports keyboard navigation between cells. -->
+        <section class="board-wrapper" aria-label="Minesweeper board">
+            <div class="board" id="board"
+                role="grid" aria-label="Minesweeper grid"></div>
+        </section>
+
+        <!-- Footer — how to play button opens the instructions panel -->
+        <footer class="instructions" aria-label="How to play">
+            <button class="instructions-btn" id="instructions-btn">How to play</button>
+        </footer>
+
+        <!-- Instructions panel — hidden by default, shown on button click.
+             role="dialog" indicates this is a modal-like overlay. -->
+        <div id="instructions-panel" aria-label="Instructions" role="dialog" hidden>
+
+            <!-- Close button — top right corner -->
+            <button class="instructions-close" id="instructions-close"
+                aria-label="Close instructions">✕</button>
+
+            <div class="instructions-section">
+                <h2 class="instructions-heading">Goal</h2>
+                <p>Reveal every cell on the grid that doesn't contain a mine.
+                    If you reveal a mine, you lose.</p>
+            </div>
+
+            <div class="instructions-section">
+                <h2 class="instructions-heading">Rules</h2>
+                <ul class="instructions-list">
+                    <li>Numbers show how many of the 8 surrounding cells contain
+                        mines — use these to figure out where mines are hiding</li>
+                    <li>Your first click is always safe — mines are placed after
+                        you reveal your first cell</li>
+                    <li>Place a flag on a cell you think contains a mine to
+                        keep track</li>
+                </ul>
+            </div>
+
+            <div class="instructions-section">
+                <h2 class="instructions-heading">Controls</h2>
+                <ul class="instructions-list">
+                    <!-- kbd elements mark up keyboard/mouse controls semantically -->
+                    <li><kbd>Left click</kbd> <strong>a cell</strong>
+                        — Reveal a cell</li>
+                    <li><kbd>Right click</kbd> <strong>a cell</strong>
+                        — Place or remove a flag</li>
+                    <li><kbd>Left click</kbd> <strong>a number</strong>
+                        — If you've flagged all the mines around it,
+                        auto-reveals remaining neighbours</li>
+                </ul>
+            </div>
+
+            <div class="instructions-section">
+                <h2 class="instructions-heading">Keyboard</h2>
+                <ul class="instructions-list">
+                    <li><kbd>Tab</kbd> — Focus the board</li>
+                    <li><kbd>Arrow keys</kbd> — Move between cells</li>
+                    <li><kbd>Enter</kbd> or <kbd>Space</kbd>
+                        — Reveal the focused cell</li>
+                    <li><kbd>F</kbd> — Flag or unflag the focused cell</li>
+                    <li><kbd>Escape</kbd> — Close instructions</li>
+                </ul>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Main script — must be type="module" to support ES module imports.
+         Deferred by default when type="module". -->
+    <script type="module" src="main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,914 @@
+/* =========================================================
+   MINESWEEPER — default.css
+   Aesthetic: industrial utilitarian — monospaced, grid-ruled,
+   high-contrast amber on near-black.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;800&display=swap');
+
+/* ---------------------------------------------------------
+   Design tokens
+   --------------------------------------------------------- */
+:root {
+    /* Colours */
+    --bg:            #0e0f0e; /* Near-black background */
+    --surface:       #161714; /* Slightly lighter surface for UI elements */
+    --board-colour:  #363b30; /* Cell background — olive-dark green */
+    --border:        #2e3128; /* Default border colour */
+    --border-hi:     #4a5040; /* Highlighted border, e.g. on hover */
+
+    --amber:         #e8a922; /* Primary accent — amber yellow */
+    --amber-dim:     #7a5810; /* Dimmed amber for flagged cell borders */
+    --amber-faint:   #2a1e08; /* Very faint amber for flagged cell backgrounds */
+
+    --red:           #d94f3a; /* Mine / loss colour */
+    --green:         #5aad6e; /* Win colour */
+    --blue:          #4a90d9; /* Clue colour for 1 */
+
+    --text:          #c8cfc0; /* Primary text */
+    --text-dim:      #606858; /* Dimmed text for secondary information */
+    --text-hi:       #f0f4e8; /* High-contrast text for hover states */
+
+    /* Clue colours — classic Minesweeper palette */
+    --c1: #4a90d9; /* 1 neighbour  — blue     */
+    --c2: #5aad6e; /* 2 neighbours — green    */
+    --c3: #d94f3a; /* 3 neighbours — red      */
+    --c4: #7b4fa6; /* 4 neighbours — purple   */
+    --c5: #c0392b; /* 5 neighbours — dark red */
+    --c6: #27b0a0; /* 6 neighbours — teal     */
+    --c7: #e8a922; /* 7 neighbours — amber    */
+    --c8: #606858; /* 8 neighbours — grey     */
+
+    /* Board */
+    --cell-size:       34px;   /* Default cell size — overridden dynamically by JS */
+    --gap:             2px;    /* Gap between cells in the board grid */
+
+    /* Sizing & spacing */
+    --radius:          3px;    /* Border radius for buttons and cells */
+    --radius-lg:       6px;    /* Larger border radius for panels and dialogs */
+    --border-width:    1px;    /* Standard border width */
+    --border-width-hi: 2px;    /* Thicker border for prominent buttons */
+    --panel-padding:   2rem;   /* Internal padding for overlay panels */
+    --section-gap:     1.5rem; /* Vertical gap between major UI sections */
+    --status-max-w:    600px;  /* Max width of the status bar */
+    --panel-max-w:     600px;  /* Max width of the instructions panel */
+    --app-max-w:       1100px; /* Max width of the overall app layout */
+    --overlay-opacity: var(--hover-opacity);   /* Background opacity for BOOM and WIN overlays */
+    --hover-opacity:   0.88;   /* Opacity on hover for solid-background buttons */
+    --press-scale:     0.97;   /* Scale transform on button press */
+
+    /* Z-index layers */
+    --z-board:       1;   /* Game board */
+    --z-panel:       50;  /* Instructions panel — above board */
+    --z-overlay:     100; /* BOOM / WIN overlays — above panel */
+    --z-intro:       200; /* Intro screen — above everything */
+    --z-difficulty:  201; /* Difficulty picker — above intro */
+
+    /* Typography */
+    --font-mono: 'Share Tech Mono', monospace;   /* Monospace for numbers and labels */
+    --font-ui:   'Barlow Condensed', sans-serif; /* Condensed sans for headings and buttons */
+    --font-size-base:      0.85rem; /* Standard font size for buttons and small text */
+    --font-size-stat:      2rem;    /* Font size for mine count and timer numbers */
+    --font-size-status:    1.5rem;  /* Font size for win/lose status message */
+    --font-size-title:     3rem;    /* Font size for intro start button */
+    --letter-spacing-ui:   0.12em;  /* Standard letter spacing for UI buttons */
+    --letter-spacing-wide: 0.2em;   /* Wider spacing for intro elements */
+
+    /* Animation durations */
+    --transition-fast: 0.1s;  /* Fast transitions e.g. transform on press */
+    --transition-std:  0.15s; /* Standard transition for colour/opacity changes */
+    --transition-slow: 0.4s;  /* Slower transitions for overlays fading out */
+}
+
+/* ---------------------------------------------------------
+   Reset & base
+   --------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem 4rem; /* Top/bottom breathing room, constrained horizontally */
+}
+
+/* Visually hidden but accessible to screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border: 0;
+}
+
+/* ---------------------------------------------------------
+   Layout
+   --------------------------------------------------------- */
+.app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem; /* Vertical spacing between major UI sections */
+    width: 100%;
+    max-width: var(--app-max-w); /* Prevents layout stretching on very wide screens */
+}
+
+/* ---------------------------------------------------------
+   Header
+   --------------------------------------------------------- */
+.header {
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    width: 100%;
+}
+
+.title {
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: clamp(2.5rem, 6vw, 4rem); /* Scales with viewport, min 2.5rem, max 4rem */
+    letter-spacing: 0.25em;
+    color: var(--amber);
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.subtitle {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text); 
+    letter-spacing: 0.15em;
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------
+   Controls
+   --------------------------------------------------------- */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.difficulty-group {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden; /* Clips child borders at the group edges */
+}
+
+.diff-btn {
+    background: var(--surface);
+    color: var(--text-dim);
+    border: none;
+    border-right: 1px solid var(--border); /* Divider between buttons */
+    padding: 0.45rem 1rem;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background var(--transition-std), color var(--transition-std);
+}
+
+.diff-btn:last-child { border-right: none; } /* Remove trailing divider */
+
+.diff-btn:hover {
+    background: var(--board-colour);
+    color: var(--text);
+}
+
+.diff-btn.active,
+.diff-btn[aria-pressed="true"] {
+    background: var(--amber-faint);
+    color: var(--amber);
+}
+
+.new-game-btn {
+    background: var(--amber);
+    color: var(--bg);
+    border: none;
+    padding: 0.45rem 1.4rem;
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: var(--letter-spacing-ui);
+    text-transform: uppercase;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity var(--transition-std), transform var(--transition-fast);
+}
+
+.new-game-btn:hover  { opacity: var(--hover-opacity); }
+.new-game-btn:active { transform: scale(var(--press-scale)); } /* Slight press effect */
+
+/* ---------------------------------------------------------
+   Status bar
+   --------------------------------------------------------- */
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: var(--status-max-w); /* Keeps status bar from stretching too wide */
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.8rem 2rem;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem; /* Space between icon and number */
+}
+
+.stat-icon { font-size: 1.8rem; }
+
+.stat-value {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-stat);
+    color: var(--amber);
+    min-width: 2.5ch; /* Prevents layout shift as numbers change */
+    text-align: right;
+}
+
+.game-status {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: var(--font-size-status);
+    letter-spacing: var(--letter-spacing-ui);
+    text-transform: uppercase;
+    min-width: 6ch; /* Prevents layout shift between status messages */
+    text-align: center;
+    transition: color var(--transition-std);
+}
+
+.game-status.won  { color: var(--green); }
+.game-status.lost { color: var(--red); }
+
+/* ---------------------------------------------------------
+   Board
+   --------------------------------------------------------- */
+.board-wrapper {
+    overflow-x: auto; /* Allows horizontal scroll on expert mode if needed */
+    max-width: 100%;
+    padding: 0.5rem;
+}
+
+.board {
+    display: grid;
+    gap: var(--gap); /* Gap between cells */
+    /* grid-template-columns set dynamically by JS based on difficulty */
+}
+
+.board [role="row"] {
+    display: contents;
+    /* display:contents makes the row invisible to layout
+       so cells still participate in the CSS grid */
+}
+/* ---------------------------------------------------------
+   Cells
+   --------------------------------------------------------- */
+.cell {
+    width:  var(--cell-size); /* Set dynamically by JS to fit viewport */
+    height: var(--cell-size);
+    background: var(--board-colour);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none; /* Prevents text selection on rapid clicks */
+    transition: background 0.1s, border-color 0.1s, transform 0.08s;
+    position: relative;
+}
+
+.cell:hover:not(.revealed):not(.flagged) {
+    background: var(--border);
+    border-color: var(--border-hi);
+}
+
+.cell:active:not(.revealed) {
+    transform: scale(0.92); /* Press feedback */
+}
+
+/* Revealed safe cell — darker background to distinguish from unrevealed */
+.cell.revealed {
+    background: var(--bg);
+    border-color: var(--border);
+    cursor: default; /* No pointer — cell is no longer interactive */
+}
+
+/* Clue number colours — one per possible neighbour count */
+.cell[data-clue="1"] { color: var(--c1); }
+.cell[data-clue="2"] { color: var(--c2); }
+.cell[data-clue="3"] { color: var(--c3); }
+.cell[data-clue="4"] { color: var(--c4); }
+.cell[data-clue="5"] { color: var(--c5); }
+.cell[data-clue="6"] { color: var(--c6); }
+.cell[data-clue="7"] { color: var(--c7); }
+.cell[data-clue="8"] { color: var(--c8); }
+
+/* Flagged cell — amber tint to indicate player-placed flag */
+.cell.flagged {
+    background: var(--amber-faint);
+    border-color: var(--amber-dim);
+    color: var(--amber);
+}
+
+/* The mine the player clicked to lose */
+.cell.mine-hit {
+    background: var(--red);
+    border-color: var(--red);
+    font-size: 1.1rem;
+    animation: cell-explode 0.3s ease-out;
+}
+
+/* Other mines revealed at end of game */
+.cell.mine-shown {
+    background: var(--board-colour);
+    border-color: var(--red);
+    color: var(--red);
+}
+
+/* Flag placed on a cell that wasn't actually a mine */
+.cell.wrong-flag {
+    background: var(--board-colour);
+    border-color: var(--red);
+    color: var(--red);
+    text-decoration: line-through;
+}
+
+@keyframes cell-explode {
+    0%   { transform: scale(1);    }
+    40%  { transform: scale(1.35); } /* Brief enlargement on explosion */
+    100% { transform: scale(1);    }
+}
+
+/* Brief green border flash on all revealed cells when game is won */
+.board.won .cell.revealed {
+    animation: cell-win-pulse 0.4s ease-out both;
+}
+
+@keyframes cell-win-pulse {
+    0%   { border-color: var(--green); }
+    100% { border-color: var(--border); }
+}
+
+/* ---------------------------------------------------------
+   Admit defeat button
+   --------------------------------------------------------- */
+.admit-defeat-btn {
+    background: var(--bg);
+    color: var(--red);
+    border: 2px solid var(--red);
+    padding: 0.45rem 1.4rem;
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: var(--letter-spacing-ui);
+    text-transform: uppercase;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background var(--transition-std), color var(--transition-std);
+}
+
+.admit-defeat-btn:hover {
+    background: var(--red);
+    color: var(--bg);
+}
+
+/* New game mode — shown after losing, replaces admit defeat */
+.admit-defeat-btn.new-game-mode {
+    background: var(--amber);
+    color: var(--bg);
+    border: 2px solid var(--amber);
+}
+
+.admit-defeat-btn.new-game-mode:hover {
+    opacity: var(--hover-opacity);
+}
+
+/* ---------------------------------------------------------
+   Instructions footer
+   --------------------------------------------------------- */
+.instructions {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    width: 100%;
+    max-width: var(--status-max-w);
+    display: flex;
+    justify-content: center;
+}
+
+kbd {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: var(--board-colour);
+    border: 1px solid var(--border-hi);
+    border-radius: 3px;
+    padding: 0.1em 0.4em;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------
+   Focus styles — keyboard accessibility
+   --------------------------------------------------------- */
+:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--amber);
+}
+
+.cell:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ---------------------------------------------------------
+   BOOM overlay — shown on loss
+   --------------------------------------------------------- */
+#boom-overlay {
+    position: fixed;
+    inset: 0; /* Covers the full viewport */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, var(--overlay-opacity)); /* Semi-transparent dark backdrop */
+    z-index: var(--z-overlay); /* Above game board but below intro (z-index 200) */
+    animation: boom-overlay-in 0.15s ease-out;
+}
+
+#boom-overlay.fade-out {
+    animation: boom-overlay-out 0.4s ease-in forwards;
+}
+
+@keyframes boom-overlay-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes boom-overlay-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+.boom-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+/* Explosion emoji — grows from tiny to large */
+.boom-flash {
+    font-size: var(--font-size-stat);
+    display: inline-block;
+    animation: boom-flash-grow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes boom-flash-grow {
+    0%   { transform: scale(0.1); opacity: 0.2; }
+    60%  { transform: scale(2.2); opacity: 1;   } /* Overshoots before settling */
+    100% { transform: scale(1.6); opacity: 1;   }
+}
+
+/* BOOM text — hidden initially, slams in after flash */
+.boom-text {
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: clamp(4rem, 15vw, 9rem); /* Responsive — scales with viewport */
+    color: var(--red);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 0 60px var(--red), 0 0 120px rgba(217, 79, 58, 0.5);
+    opacity: 0;
+    transform: scale(2);
+}
+
+.boom-text.boom-text-show {
+    animation: boom-text-slam 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes boom-text-slam {
+    0%   { transform: scale(2.5); opacity: 0; }
+    70%  { transform: scale(0.95); opacity: 1; } /* Slight undershoot */
+    100% { transform: scale(1);    opacity: 1; }
+}
+
+/* Bottom section (subtitle + buttons) — slides up after BOOM text */
+.boom-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    opacity: 0;
+    transform: translateY(30px); /* Starts below, rises into position */
+}
+
+.boom-bottom.boom-bottom-show {
+    animation: boom-bottom-rise 0.4s ease-out forwards;
+}
+
+@keyframes boom-bottom-rise {
+    0%   { transform: translateY(30px); opacity: 0; }
+    100% { transform: translateY(0);    opacity: 1; }
+}
+
+.boom-sub {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+}
+
+.boom-btns {
+    display: flex;
+    gap: 1rem; /* Space between See map / New game buttons */
+}
+
+.boom-btn {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.6rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-hi);
+    background: var(--board-colour);
+    color: var(--text);
+    cursor: pointer;
+    transition: background var(--transition-std), color var(--transition-std);
+}
+
+.boom-btn:hover {
+    background: var(--border);
+    color: var(--text-hi);
+}
+
+/* Primary action button (New game) */
+.boom-btn-primary {
+    background: var(--amber);
+    color: var(--bg);
+    border-color: var(--amber);
+}
+
+.boom-btn-primary:hover {
+    opacity: var(--hover-opacity);
+}
+
+/* ---------------------------------------------------------
+   WIN overlay — shown on victory
+   --------------------------------------------------------- */
+#win-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, var(--overlay-opacity));
+    z-index: var(--z-overlay);
+    animation: boom-overlay-in 0.15s ease-out; /* Reuses boom fade-in */
+}
+
+#win-overlay.fade-out {
+    animation: boom-overlay-out 0.4s ease-in forwards;
+}
+
+.win-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+/* YOU WIN text — slams in using same animation as BOOM */
+.win-text {
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: clamp(4rem, 15vw, 9rem);
+    color: var(--green);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 0 60px var(--green), 0 0 120px rgba(90, 173, 110, 0.5);
+    opacity: 0;
+    transform: scale(2);
+}
+
+.win-text.win-text-show {
+    animation: boom-text-slam 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Time display — rises up after YOU WIN text */
+.win-time {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    color: var(--amber);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.win-time.win-time-show {
+    animation: boom-bottom-rise 0.4s ease-out forwards;
+}
+
+/* Buttons section */
+.win-bottom {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.win-bottom.win-bottom-show {
+    animation: boom-bottom-rise 0.4s ease-out forwards;
+}
+
+/* ---------------------------------------------------------
+   Intro screen — full screen overlay on first load
+   --------------------------------------------------------- */
+#intro {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: var(--z-intro); /* Above everything else including overlays */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Clips falling bombs at screen edges */
+}
+
+#intro.hidden {
+    display: none;
+}
+
+/* Container for falling bomb animations */
+#intro-bombs {
+    position: absolute;
+    inset: 0;
+    pointer-events: none; /* Bombs don't block clicks on text/buttons */
+    z-index: var(--z-panel); /* Above intro text (z-index 1) and start button (z-index 2) */
+}
+
+/* Individual falling bomb — animated via JS requestAnimationFrame */
+.intro-falling-bomb {
+    position: absolute;
+    top: 0;
+    display: inline-block;
+    opacity: 1;
+}
+
+/* Intro text group — Welcome / to / MINESWEEPER */
+#intro-text {
+    position: relative;
+    z-index: 1; /* Behind bombs (z-index 3) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    pointer-events: none;
+}
+
+#intro-welcome {
+    font-family: var(--font-ui);
+    font-weight: 400;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: var(--text);
+    letter-spacing: var(--letter-spacing-wide);
+    opacity: 0;
+    transform: translateX(-120%); /* Starts off-screen left */
+    animation: intro-slide-left 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+}
+
+#intro-to {
+    font-family: var(--font-mono);
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    color: var(--text-dim);
+    letter-spacing: 0.3em;
+    opacity: 0;
+    transform: translateX(120%); /* Starts off-screen right */
+    animation: intro-slide-right 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
+}
+
+#intro-title {
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: clamp(3rem, 12vw, 8rem);
+    color: var(--amber);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 40px rgba(232, 169, 34, 0.4);
+    opacity: 0;
+    transform: scale(3); /* Starts oversized then slams down */
+    animation: intro-title-smash 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.6s forwards;
+}
+
+@keyframes intro-slide-left {
+    0%   { transform: translateX(-120%); opacity: 0; }
+    100% { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes intro-slide-right {
+    0%   { transform: translateX(120%); opacity: 0; }
+    100% { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes intro-title-smash {
+    0%   { transform: scale(3);    opacity: 0; }
+    60%  { transform: scale(0.95); opacity: 1; } /* Slight undershoot */
+    80%  { transform: scale(1.05); opacity: 1; } /* Slight overshoot */
+    100% { transform: scale(1);    opacity: 1; }
+}
+
+/* Start game button — hidden until bombs finish falling */
+#intro-start {
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: var(--font-size-title);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    background: var(--bg);
+    color: var(--amber);
+    border: 2px solid var(--amber);
+    padding: 1.5rem 5rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    pointer-events: none; /* Disabled until made visible by JS */
+    margin-top: 2rem;
+    transition: background var(--transition-std), color var(--transition-std);
+}
+
+#intro-start:hover {
+    background: var(--amber);
+    color: var(--bg);
+}
+
+#intro-start:active { transform: scale(var(--press-scale)); }
+
+/* Difficulty picker — shown after Start Game, and after New Game */
+#intro-difficulty {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centres element regardless of size */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--section-gap);
+    opacity: 0;
+    pointer-events: none;
+    z-index: var(--z-difficulty); /* Above intro (200) so it appears on top */
+}
+
+.intro-diff-title {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: var(--font-size-status);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+.intro-diff-btns {
+    display: flex;
+    gap: 1rem;
+}
+
+.intro-diff-btn {
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: var(--font-size-status);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--bg);
+    color: var(--amber);
+    border: 2px solid var(--amber);
+    padding: 1rem 2rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background var(--transition-std), color var(--transition-std);
+}
+
+.intro-diff-btn:hover {
+    background: var(--amber);
+    color: var(--bg);
+}
+
+/* ---------------------------------------------------------
+   Instructions button & panel
+   --------------------------------------------------------- */
+.instructions-btn {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: var(--letter-spacing-ui);
+    text-transform: uppercase;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-hi);
+    padding: 0.4rem 1.2rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: color var(--transition-std), border-color var(--transition-std);
+}
+
+.instructions-btn:hover {
+    color: var(--text);
+    border-color: var(--text);
+}
+
+#instructions-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-lg);
+    padding: var(--panel-padding);
+    z-index: var(--z-panel); /* Above board, below overlays */
+    width: min(var(--panel-max-w), 90vw); /* Responsive — 600px max, 90% on small screens */
+    display: flex;
+    flex-direction: column;
+    gap: var(--section-gap);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+}
+
+#instructions-panel[hidden] {
+    display: none;
+}
+
+/* Close button — top right corner of panel */
+.instructions-close {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius);
+    transition: color var(--transition-std);
+}
+
+.instructions-close:hover {
+    color: var(--text);
+}
+
+.instructions-heading {
+    font-family: var(--font-ui);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.5rem;
+}
+
+.instructions-section p,
+.instructions-section li {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.7;
+}
+
+.instructions-list {
+    padding-left: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* Highlights key terms like "a cell" and "a number" in amber */
+.instructions-list strong {
+    color: var(--amber);
+}
