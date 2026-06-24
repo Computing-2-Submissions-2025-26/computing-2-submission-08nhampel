@@ -3,14 +3,20 @@
   "type": "module",
   "version": "1.0.0",
   "description": "",
-  "main": "web-app/Module.js",
-  "author": "",
+  "main": "web-app/minesweeper.js",
+  "author": "Nell Hampel",
   "license": "ISC",
+  "scripts": {
+    "start": "serve web-app",
+    "test": "mocha"
+  },
   "dependencies": {
     "ramda": "^0.32.0"
   },
   "devDependencies": {
     "docdash": "^2.0.2",
-    "mocha": "^11.7.5"
+    "fast-check": "^4.8.0",
+    "mocha": "^11.7.5",
+    "serve": "^14.2.4"
   }
 }

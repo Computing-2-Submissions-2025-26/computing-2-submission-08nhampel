@@ -1,8 +1,36 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/H6lPFq0J)
 # Computing 2 Coursework Submission.
-**CID**: 02388263
+**CID**: [02388263]
 
-This is the submission template for your Computing 2 Applications coursework submission.
+## AI Disclosure
+Claude (Anthropic) was used as a coding assistant during this project.
+Specifically it was used to help neaten and format code to meet jslint
+requirements, and to assist with the implementation of tests —
+particularly the property-based tests using fast-check, where it helped
+design the arbitraries and properties. All game logic, architecture,
+and design decisions are my own.
+
+## Game
+Minesweeper — a single-player logic game where the player reveals
+cells on a grid, using numbered clues to deduce where mines are
+hidden. The goal is to reveal every safe cell without detonating
+a mine.
+
+## Running the game
+1. Install dependencies: `npm install`
+2. Start the server: `npm start`
+3. Open `http://localhost:3000` in your browser
+
+## Running the tests
+Install dependencies first if you haven't already, then:
+```properties
+npm test
+```
+
+## Generating the API docs
+```properties
+npx jsdoc -c jsdoc.json
+```
+Then open `docs/index.html` in your browser.
 
 ## Checklist
 ### Install dependencies locally
@@ -17,35 +45,35 @@ I'll run the same commands when I download your repos.
 ### Game Module – API
 *You will produce an API specification, i.e. a list of function names and their signatures, for a Javascript module that represents the state of your game and the operations you can perform on it that advances the game or provides information.*
 
-- [ ] Include a `.js ` module file in `/web-app` containing the API using `jsdoc`.
-- [ ] Update `/jsdoc.json` to point to this module in `.source.include` (line 7)
-- [ ] Compile jsdoc using the run configuration `Generate Docs`
-- [ ] Check the generated docs have compiled correctly.
+- [/ ] Include a `.js ` module file in `/web-app` containing the API using `jsdoc`.
+- [ /] Update `/jsdoc.json` to point to this module in `.source.include` (line 7)
+- [/ ] Compile jsdoc using the run configuration `Generate Docs`
+- [ /] Check the generated docs have compiled correctly.
 
 ### Game Module – Implementation
 *You will implement, in Javascript, the module you specified above. Such that your game can be simulated in code, e.g. in the debug console.*
 
-- [ ] The file above should be fully implemented.
+- [/ ] The file above should be fully implemented.
 
 ### Unit Tests – Specification
 *For the Game module API you have produced, write a set of unit tests descriptions that specify the expected behaviour of one aspect of your API, e.g. you might pick the win condition, or how the state changes when a move is made.*
 
-- [ ] Write unit test definitions in `/web-app/tests`.
-- [ ] Check the headings appear in the Testing sidebar.
+- [/ ] Write unit test definitions in `/web-app/tests`.
+- [/ ] Check the headings appear in the Testing sidebar.
 
 ### Unit Tests – Implementation
 *Implement in code the unit tests specified above.*
 
-- [ ] Implement the tests above.
+- [ /] Implement the tests above.
 
 ### Web Application
 *Produce a web application that allows a user to interface with your game module.*
 
 - Implement in `/web-app`
-  - [ ] `index.html`
-  - [ ] `default.css`
-  - [ ] `main.js`
-  - [ ] Any other files you need to include.
+  - /[ ] `index.html`
+  - [/ ] `default.css`
+  - [ /] `main.js`
+  - [ /] Any other files you need to include.
 
 ### Finally
 - [ ] Push to GitHub.

@@ -1,4 +1,3 @@
-import R from "./ramda.js";
 /*jslint browser*/
 import Minesweeper from "./minesweeper.js";
 
@@ -7,7 +6,7 @@ import Minesweeper from "./minesweeper.js";
 // ---------------------------------------------------------------------------
 
 let game_state;
-let current_config = {rows: 9, cols: 9, mines: 10};
+let current_config = {tot_rows: 9, tot_cols: 9, mines: 10};
 let timer_id = null;
 let elapsed = 0;
 let timer_started = false;
@@ -135,13 +134,14 @@ const aria_label_for = function (cell, r, c, game_over) {
 // Cell size is computed dynamically so the board fits the viewport
 // regardless of difficulty (9x9, 16x16, or 30x16) or window size.
 const update_cell_size = function () {
-    const cols = game_state.cols;
-    const rows = game_state.rows;
-    const padding = 32;
-    const available_w = window.innerWidth - padding;
-    const available_h = window.innerHeight - 300;
-    const cell_w = Math.floor(available_w / cols);
-    const cell_h = Math.floor(available_h / rows);
+    const tot_cols = game_state.tot_cols;
+    const tot_rows = game_state.tot_rows;
+    const board_wrapper = document.querySelector(".board-wrapper");
+    const wrapper_rect = board_wrapper.getBoundingClientRect();
+    const available_w = wrapper_rect.width - 16;
+    const available_h = window.innerHeight - wrapper_rect.top - 80;
+    const cell_w = Math.floor(available_w / tot_cols);
+    const cell_h = Math.floor(available_h / tot_rows);
     const cell_size = Math.min(cell_w, cell_h, 48);
     document.documentElement.style.setProperty(
         "--cell-size",
@@ -149,15 +149,42 @@ const update_cell_size = function () {
     );
 };
 
+const make_cell_el = function (cell, ri, ci, hit_key, game_over) {
+    const el = document.createElement("button");
+    const is_hit = ((ri + "-" + ci) === hit_key);
+    const classes = cell_classes(cell, is_hit, game_over);
+    el.className = classes.join(" ");
+    el.textContent = cell_label(cell, game_over);
+    el.setAttribute("role", "gridcell");
+    el.setAttribute(
+        "aria-label",
+        aria_label_for(cell, ri, ci, game_over)
+    );
+    if (cell.revealed || game_over) {
+        el.setAttribute("tabindex", "-1");
+    }
+    if (cell.clue > 0 && cell.revealed) {
+        el.setAttribute("data-clue", cell.clue);
+    }
+    el.addEventListener("click", function () {
+        handle_click(ri, ci);
+    });
+    el.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        handle_right_click(ri, ci);
+    });
+    return el;
+};
+
 const render_board = function () {
     const grid = game_state.grid;
-    const cols = game_state.cols;
+    const tot_cols = game_state.tot_cols;
     const status = game_state.status;
     const game_over = status !== "in_play";
     let hit_key = null;
 
     board_el.style.gridTemplateColumns = (
-        "repeat(" + cols + ", var(--cell-size))"
+        "repeat(" + tot_cols + ", var(--cell-size))"
     );
 
     if (status === "lost") {
@@ -174,38 +201,14 @@ const render_board = function () {
 
     board_el.innerHTML = "";
 
-grid.forEach(function (row_cells, ri) {
-    const row_el = document.createElement("div");
-    row_el.setAttribute("role", "row");
-    row_el.setAttribute("aria-label", "Row " + (ri + 1));
-
-    row_cells.forEach(function (cell, ci) {
-        const el = document.createElement("button");
-            const is_hit = ((ri + "-" + ci) === hit_key);
-
-            el.className = cell_classes(cell, is_hit, game_over).join(" ");
-            el.textContent = cell_label(cell, game_over);
-            el.setAttribute("role", "gridcell");
-            el.setAttribute(
-                "aria-label",
-                aria_label_for(cell, ri, ci, game_over)
+    grid.forEach(function (row_cells, ri) {
+        const row_el = document.createElement("div");
+        row_el.setAttribute("role", "row");
+        row_el.setAttribute("aria-label", "Row " + (ri + 1));
+        row_cells.forEach(function (cell, ci) {
+            row_el.appendChild(
+                make_cell_el(cell, ri, ci, hit_key, game_over)
             );
-            if (cell.revealed || game_over) {
-                el.setAttribute("tabindex", "-1");
-            }
-            if (cell.clue > 0 && cell.revealed) {
-                el.setAttribute("data-clue", cell.clue);
-            }
-
-            el.addEventListener("click", function () {
-                handle_click(ri, ci);
-            });
-            el.addEventListener("contextmenu", function (e) {
-                e.preventDefault();
-                handle_right_click(ri, ci);
-            });
-
-            row_el.appendChild(el);
         });
         board_el.appendChild(row_el);
     });
@@ -238,7 +241,7 @@ const show_difficulty_picker = function () {
 };
 
 // ---------------------------------------------------------------------------
-// Status & BOOM overlay
+// Status & overlays
 // ---------------------------------------------------------------------------
 
 const format_time = function (seconds) {
@@ -406,17 +409,14 @@ const handle_click = function (row, col) {
         return;
     }
     start_timer();
-
     if (cell.revealed && cell.clue > 0) {
         game_state = Minesweeper.chord(row, col, game_state);
     } else {
         game_state = Minesweeper.reveal(row, col, game_state);
     }
-
     if (game_state.status !== "in_play") {
         stop_timer();
     }
-
     render_board();
 };
 
@@ -437,8 +437,8 @@ const start_new_game = function () {
     const admit_btn = document.getElementById("admit-defeat-btn");
     reset_timer();
     game_state = Minesweeper.make_game(
-        current_config.rows,
-        current_config.cols,
+        current_config.tot_rows,
+        current_config.tot_cols,
         current_config.mines
     );
     admit_btn.textContent = "Admit Defeat";
@@ -468,10 +468,10 @@ document.getElementById("admit-defeat-btn").addEventListener(
         });
         if (is_first_reveal) {
             const random_row = Math.floor(
-                Math.random() * game_state.rows
+                Math.random() * game_state.tot_rows
             );
             const random_col = Math.floor(
-                Math.random() * game_state.cols
+                Math.random() * game_state.tot_cols
             );
             game_state = Minesweeper.reveal(
                 random_row,
@@ -515,32 +515,28 @@ document.addEventListener("keydown", function (event) {
             panel.setAttribute("hidden", "");
         }
     }
-})
+});
 
 // ---------------------------------------------------------------------------
-// Keyboard navigation — arrow keys to move, Enter/Space to reveal, F to flag
+// Keyboard navigation — arrow keys, Enter/Space to reveal, F to flag
 // ---------------------------------------------------------------------------
 
 board_el.addEventListener("keydown", function (event) {
     const focused = document.activeElement;
     const cells = Array.from(board_el.querySelectorAll(".cell"));
     const index = cells.indexOf(focused);
-    const cols = game_state.cols;
+    const tot_cols = game_state.tot_cols;
     const total = cells.length;
 
     if (!focused || !focused.classList.contains("cell")) {
         return;
     }
-
-    if (
-        event.key === "Enter" ||
-        event.key === " "
-    ) {
+    if (event.key === "Enter" || event.key === " ") {
         focused.click();
     }
     if (event.key === "f" || event.key === "F") {
-        const row = Math.floor(index / cols);
-        const col = index % cols;
+        const row = Math.floor(index / tot_cols);
+        const col = index % tot_cols;
         game_state = Minesweeper.flag(row, col, game_state);
         render_board();
         cells[index].focus();
@@ -551,13 +547,14 @@ board_el.addEventListener("keydown", function (event) {
     if (event.key === "ArrowRight" && index < total - 1) {
         cells[index + 1].focus();
     }
-    if (event.key === "ArrowUp" && index - cols >= 0) {
-        cells[index - cols].focus();
+    if (event.key === "ArrowUp" && index - tot_cols >= 0) {
+        cells[index - tot_cols].focus();
     }
-    if (event.key === "ArrowDown" && index + cols < total) {
-        cells[index + cols].focus();
+    if (event.key === "ArrowDown" && index + tot_cols < total) {
+        cells[index + tot_cols].focus();
     }
 });
+
 // ---------------------------------------------------------------------------
 // Window resize — recalculate cell size when viewport changes
 // ---------------------------------------------------------------------------
@@ -594,7 +591,7 @@ const run_intro = function () {
                 setTimeout(function () {
                     intro_text.style.display = "none";
                     start_btn.style.transition = (
-                        "opacity 0.5s ease-out, transform 0.5s ease-out"
+                        "opacity 0.5s, transform 0.5s"
                     );
                     start_btn.style.opacity = "1";
                     start_btn.style.pointerEvents = "auto";
@@ -643,7 +640,6 @@ const run_intro = function () {
         start_btn.style.transition = "opacity 0.3s ease-out";
         start_btn.style.opacity = "0";
         start_btn.style.pointerEvents = "none";
-
         setTimeout(function () {
             const diff_picker = document.getElementById(
                 "intro-difficulty"
@@ -663,8 +659,8 @@ const run_intro = function () {
                     "intro-difficulty"
                 );
                 current_config = {
-                    rows: Number(btn.dataset.rows),
-                    cols: Number(btn.dataset.cols),
+                    tot_rows: Number(btn.dataset.rows),
+                    tot_cols: Number(btn.dataset.cols),
                     mines: Number(btn.dataset.mines)
                 };
                 start_new_game();

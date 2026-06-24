@@ -1,7 +1,6 @@
 /* =========================================================
    MINESWEEPER — default.css
-   Aesthetic: industrial utilitarian — monospaced, grid-ruled,
-   high-contrast amber on near-black.
+   Aesthetic: industrial, retro game
    ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;800&display=swap');
@@ -68,11 +67,21 @@
     --font-mono: 'Share Tech Mono', monospace;   /* Monospace for numbers and labels */
     --font-ui:   'Barlow Condensed', sans-serif; /* Condensed sans for headings and buttons */
     --font-size-base:      0.85rem; /* Standard font size for buttons and small text */
+    --font-size-kbd:       0.72rem; /* Font size for keyboard shortcut labels */
+    --font-size-subtitle:  0.75rem; /* Font size for page subtitle */
     --font-size-stat:      2rem;    /* Font size for mine count and timer numbers */
+    --font-size-stat-icon: 1.8rem;  /* Font size for mine/timer emoji icons */
     --font-size-status:    1.5rem;  /* Font size for win/lose status message */
     --font-size-title:     3rem;    /* Font size for intro start button */
+    --font-size-overlay:   1.1rem;  /* Font size for overlay subtitle text */
+    --font-size-btn:       0.9rem;  /* Font size for overlay action buttons */
+    --font-size-win-time:  2.5rem;  /* Font size for win time display */
     --letter-spacing-ui:   0.12em;  /* Standard letter spacing for UI buttons */
     --letter-spacing-wide: 0.2em;   /* Wider spacing for intro elements */
+    --letter-spacing-hero: 0.25em;  /* Extra wide spacing for main title */
+    --letter-spacing-mid:  0.15em;  /* Medium spacing for overlays and diff buttons */
+    --letter-spacing-mono: 0.1em;   /* Subtle spacing for monospace overlay text */
+    --letter-spacing-nav:  0.3em;   /* Wide spacing for intro "to" text */
 
     /* Animation durations */
     --transition-fast: 0.1s;  /* Fast transitions e.g. transform on press */
@@ -133,7 +142,7 @@ body {
     font-family: var(--font-ui);
     font-weight: 800;
     font-size: clamp(2.5rem, 6vw, 4rem); /* Scales with viewport, min 2.5rem, max 4rem */
-    letter-spacing: 0.25em;
+    letter-spacing: var(--letter-spacing-hero);
     color: var(--amber);
     text-transform: uppercase;
     line-height: 1;
@@ -141,9 +150,9 @@ body {
 
 .subtitle {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text); 
-    letter-spacing: 0.15em;
+    font-size: var(--font-size-subtitle);
+    color: var(--text-dim);
+    letter-spacing: var(--letter-spacing-mid);
     margin-top: 0.3rem;
     text-transform: uppercase;
 }
@@ -234,7 +243,7 @@ body {
     gap: 0.4rem; /* Space between icon and number */
 }
 
-.stat-icon { font-size: 1.8rem; }
+.stat-icon { font-size: var(--font-size-stat-icon); }
 
 .stat-value {
     font-family: var(--font-mono);
@@ -273,11 +282,6 @@ body {
     /* grid-template-columns set dynamically by JS based on difficulty */
 }
 
-.board [role="row"] {
-    display: contents;
-    /* display:contents makes the row invisible to layout
-       so cells still participate in the CSS grid */
-}
 /* ---------------------------------------------------------
    Cells
    --------------------------------------------------------- */
@@ -336,7 +340,7 @@ body {
 .cell.mine-hit {
     background: var(--red);
     border-color: var(--red);
-    font-size: 1.1rem;
+    font-size: var(--font-size-overlay);
     animation: cell-explode 0.3s ease-out;
 }
 
@@ -419,7 +423,7 @@ body {
 
 kbd {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--font-size-kbd);
     background: var(--board-colour);
     border: 1px solid var(--border-hi);
     border-radius: 3px;
@@ -438,13 +442,6 @@ kbd {
 
 button:focus-visible {
     outline: 2px solid var(--amber);
-}
-
-.cell:focus-visible {
-    outline: 2px solid var(--amber);
-    outline-offset: 2px;
-    position: relative;
-    z-index: 1;
 }
 
 /* ---------------------------------------------------------
@@ -502,7 +499,7 @@ button:focus-visible {
     font-weight: 800;
     font-size: clamp(4rem, 15vw, 9rem); /* Responsive — scales with viewport */
     color: var(--red);
-    letter-spacing: 0.15em;
+    letter-spacing: var(--letter-spacing-mid);
     text-transform: uppercase;
     text-shadow: 0 0 60px var(--red), 0 0 120px rgba(217, 79, 58, 0.5);
     opacity: 0;
@@ -540,9 +537,9 @@ button:focus-visible {
 
 .boom-sub {
     font-family: var(--font-mono);
-    font-size: 1.1rem;
+    font-size: var(--font-size-overlay);
     color: var(--text-dim);
-    letter-spacing: 0.1em;
+    letter-spacing: var(--letter-spacing-mono);
 }
 
 .boom-btns {
@@ -553,8 +550,8 @@ button:focus-visible {
 .boom-btn {
     font-family: var(--font-ui);
     font-weight: 600;
-    font-size: 0.9rem;
-    letter-spacing: 0.1em;
+    font-size: var(--font-size-btn);
+    letter-spacing: var(--letter-spacing-mono);
     text-transform: uppercase;
     padding: 0.6rem 1.6rem;
     border-radius: var(--radius);
@@ -613,7 +610,7 @@ button:focus-visible {
     font-weight: 800;
     font-size: clamp(4rem, 15vw, 9rem);
     color: var(--green);
-    letter-spacing: 0.15em;
+    letter-spacing: var(--letter-spacing-mid);
     text-transform: uppercase;
     text-shadow: 0 0 60px var(--green), 0 0 120px rgba(90, 173, 110, 0.5);
     opacity: 0;
@@ -627,7 +624,7 @@ button:focus-visible {
 /* Time display — rises up after YOU WIN text */
 .win-time {
     font-family: var(--font-mono);
-    font-size: 2.5rem;
+    font-size: var(--font-size-win-time);
     color: var(--amber);
     opacity: 0;
     transform: translateY(20px);
@@ -708,7 +705,7 @@ button:focus-visible {
     font-family: var(--font-mono);
     font-size: clamp(1rem, 3vw, 1.5rem);
     color: var(--text-dim);
-    letter-spacing: 0.3em;
+    letter-spacing: var(--letter-spacing-nav);
     opacity: 0;
     transform: translateX(120%); /* Starts off-screen right */
     animation: intro-slide-right 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
@@ -719,7 +716,7 @@ button:focus-visible {
     font-weight: 800;
     font-size: clamp(3rem, 12vw, 8rem);
     color: var(--amber);
-    letter-spacing: 0.15em;
+    letter-spacing: var(--letter-spacing-mid);
     text-shadow: 0 0 40px rgba(232, 169, 34, 0.4);
     opacity: 0;
     transform: scale(3); /* Starts oversized then slams down */
@@ -804,7 +801,7 @@ button:focus-visible {
     font-family: var(--font-ui);
     font-weight: 800;
     font-size: var(--font-size-status);
-    letter-spacing: 0.15em;
+    letter-spacing: var(--letter-spacing-mid);
     text-transform: uppercase;
     background: var(--bg);
     color: var(--amber);
@@ -830,7 +827,7 @@ button:focus-visible {
     letter-spacing: var(--letter-spacing-ui);
     text-transform: uppercase;
     background: var(--bg);
-    color: var(--text);
+    color: var(--text-dim);
     border: 1px solid var(--border-hi);
     padding: 0.4rem 1.2rem;
     border-radius: var(--radius);
@@ -886,8 +883,8 @@ button:focus-visible {
 .instructions-heading {
     font-family: var(--font-ui);
     font-weight: 800;
-    font-size: 1.1rem;
-    letter-spacing: 0.15em;
+    font-size: var(--font-size-overlay);
+    letter-spacing: var(--letter-spacing-mid);
     text-transform: uppercase;
     color: var(--amber);
     margin-bottom: 0.5rem;
