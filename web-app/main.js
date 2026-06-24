@@ -1,6 +1,6 @@
 /*jslint browser*/
 import Minesweeper from "./minesweeper.js";
-
+window.Minesweeper = Minesweeper;
 // ---------------------------------------------------------------------------
 // Application state
 // ---------------------------------------------------------------------------

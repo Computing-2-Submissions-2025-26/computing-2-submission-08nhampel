@@ -1,4 +1,3 @@
-/*jslint browser*/
 import R from "./ramda.js";
 
 /**
