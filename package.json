@@ -7,7 +7,7 @@
   "author": "Nell Hampel",
   "license": "ISC",
   "scripts": {
-    "start": "serve web-app",
+    "start": "serve .",
     "test": "mocha"
   },
   "dependencies": {

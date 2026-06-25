@@ -1,12 +1,20 @@
 /*jslint browser*/
 import Minesweeper from "./minesweeper.js";
+
+// Expose module to browser console for debugging and manual testing.
 window.Minesweeper = Minesweeper;
+
 // ---------------------------------------------------------------------------
 // Application state
 // ---------------------------------------------------------------------------
 
+// game_state holds the current Minesweeper game object returned by the module.
 let game_state;
+
+// current_config stores the chosen difficulty settings for the current game.
 let current_config = {tot_rows: 9, tot_cols: 9, mines: 10};
+
+// Timer state — tracks the interval ID, elapsed seconds, and whether started.
 let timer_id = null;
 let elapsed = 0;
 let timer_started = false;
@@ -15,6 +23,7 @@ let timer_started = false;
 // DOM references
 // ---------------------------------------------------------------------------
 
+// These elements are referenced throughout the UI update functions.
 const board_el = document.getElementById("board");
 const mine_count_el = document.getElementById("mine-count");
 const timer_el = document.getElementById("timer");
@@ -24,6 +33,7 @@ const status_el = document.getElementById("game-status");
 // Timer
 // ---------------------------------------------------------------------------
 
+// Starts the game timer on player action. Does nothing if already running.
 const start_timer = function () {
     if (timer_started) {
         return;
@@ -35,11 +45,13 @@ const start_timer = function () {
     }, 1000);
 };
 
+// Stops the timer — called when the game ends.
 const stop_timer = function () {
     clearInterval(timer_id);
     timer_id = null;
 };
 
+// Resets the timer back to zero — called at the start of each new game.
 const reset_timer = function () {
     stop_timer();
     elapsed = 0;
@@ -51,6 +63,7 @@ const reset_timer = function () {
 // Mine counter
 // ---------------------------------------------------------------------------
 
+// Returns the number of flags the player has placed on the board.
 const count_flags = function (game) {
     return game.grid.reduce(function (total, row) {
         return total + row.filter(function (cell) {
@@ -59,6 +72,7 @@ const count_flags = function (game) {
     }, 0);
 };
 
+// Updates the mine counter display — shows mines remaining (total minus flags).
 const update_mine_counter = function (game) {
     mine_count_el.textContent = game.total_mines - count_flags(game);
 };
@@ -67,25 +81,29 @@ const update_mine_counter = function (game) {
 // Board rendering
 // ---------------------------------------------------------------------------
 
+// Returns the text label to display inside a cell based on its state.
+// Flagged cells show a flag symbol; revealed mines show a bomb; clues show
+// their number; unrevealed empty cells show nothing.
 const cell_label = function (cell, game_over) {
     if (cell.flagged && !cell.revealed) {
         if (game_over && !cell.mine) {
-            return "✕";
+            return "✕"; // Wrong flag — mine was not here
         }
-        return "⚑";
+        return "⚑"; // Correct flag placement
     }
     if (!cell.revealed) {
-        return "";
+        return ""; // Hidden cell — nothing to show
     }
     if (cell.mine) {
-        return "💣";
+        return "💣"; // Revealed mine
     }
     if (cell.clue > 0) {
-        return String(cell.clue);
+        return String(cell.clue); // Number of neighbouring mines
     }
-    return "";
+    return ""; // Empty revealed cell
 };
 
+// Returns the list of CSS classes to apply to a cell based on its state.
 const cell_classes = function (cell, is_hit, game_over) {
     const classes = ["cell"];
     if (cell.revealed) {
@@ -95,17 +113,19 @@ const cell_classes = function (cell, is_hit, game_over) {
         classes.push("flagged");
     }
     if (is_hit) {
-        classes.push("mine-hit");
+        classes.push("mine-hit"); // The specific mine the player clicked
     }
     if (game_over && cell.mine && !cell.flagged && !is_hit) {
-        classes.push("mine-shown");
+        classes.push("mine-shown"); // Other mines revealed at game end
     }
     if (game_over && cell.flagged && !cell.mine) {
-        classes.push("wrong-flag");
+        classes.push("wrong-flag"); // Flag placed on a safe cell
     }
     return classes;
 };
 
+// Returns a descriptive label for cell.
+// Describes the cell's position and current state.
 const aria_label_for = function (cell, r, c, game_over) {
     const pos = "Row " + (r + 1) + ", column " + (c + 1);
     if (!cell.revealed && !game_over) {
@@ -131,15 +151,24 @@ const aria_label_for = function (cell, r, c, game_over) {
     return pos + ", empty";
 };
 
-// Cell size is computed dynamically so the board fits the viewport
-// regardless of difficulty (9x9, 16x16, or 30x16) or window size.
+// Computes the correct cell size in pixels so the board always fits the
+// available screen space. Called on render and on window resize.
+// Uses viewport width and measured UI heights to determine the largest
+// cell size that fits both horizontally and vertically.
 const update_cell_size = function () {
     const tot_cols = game_state.tot_cols;
     const tot_rows = game_state.tot_rows;
-    const board_wrapper = document.querySelector(".board-wrapper");
-    const wrapper_rect = board_wrapper.getBoundingClientRect();
-    const available_w = wrapper_rect.width - 16;
-    const available_h = window.innerHeight - wrapper_rect.top - 80;
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const ui_height = (
+        document.querySelector(".header").offsetHeight +
+        document.querySelector(".controls").offsetHeight +
+        document.querySelector(".status-bar").offsetHeight +
+        document.querySelector(".instructions").offsetHeight +
+        80 /* gaps and padding */
+    );
+    const available_w = vw - 32;
+    const available_h = vh - ui_height;
     const cell_w = Math.floor(available_w / tot_cols);
     const cell_h = Math.floor(available_h / tot_rows);
     const cell_size = Math.min(cell_w, cell_h, 48);
@@ -149,6 +178,9 @@ const update_cell_size = function () {
     );
 };
 
+// Creates and returns a single cell button element with all its attributes,
+// event listeners and styling applied. Reduces nesting in
+// render_board and to keep each cell's construction self-contained.
 const make_cell_el = function (cell, ri, ci, hit_key, game_over) {
     const el = document.createElement("button");
     const is_hit = ((ri + "-" + ci) === hit_key);
@@ -161,21 +193,24 @@ const make_cell_el = function (cell, ri, ci, hit_key, game_over) {
         aria_label_for(cell, ri, ci, game_over)
     );
     if (cell.revealed || game_over) {
-        el.setAttribute("tabindex", "-1");
+        el.setAttribute("tabindex", "-1"); // Remove when inactive
     }
     if (cell.clue > 0 && cell.revealed) {
-        el.setAttribute("data-clue", cell.clue);
+        el.setAttribute("data-clue", cell.clue); // Used by CSS for clue colours
     }
     el.addEventListener("click", function () {
         handle_click(ri, ci);
     });
     el.addEventListener("contextmenu", function (e) {
-        e.preventDefault();
+        e.preventDefault(); // Suppress the browser right-click menu
         handle_right_click(ri, ci);
     });
     return el;
 };
 
+// Redraws the entire board from the current game_state.
+// Also updates the status display, mine counter and cell size.
+// Called after every player action.
 const render_board = function () {
     const grid = game_state.grid;
     const tot_cols = game_state.tot_cols;
@@ -183,10 +218,13 @@ const render_board = function () {
     const game_over = status !== "in_play";
     let hit_key = null;
 
+    // Set the CSS grid columns to match the current board width.
     board_el.style.gridTemplateColumns = (
         "repeat(" + tot_cols + ", var(--cell-size))"
     );
 
+    // Find the mine the player clicked (if the game is lost) so it can
+    // be highlighted differently from the other revealed mines.
     if (status === "lost") {
         grid.some(function (row_cells, ri) {
             return row_cells.some(function (cell, ci) {
@@ -201,10 +239,15 @@ const render_board = function () {
 
     board_el.innerHTML = "";
 
+    // Build the grid — each row is wrapped in a div with role="row" for
+    // correct accessibility tree structure. display:contents makes the
+    // wrapper invisible to CSS grid layout so cells sit directly in the
+    // grid, giving the correct 2D layout.
     grid.forEach(function (row_cells, ri) {
         const row_el = document.createElement("div");
         row_el.setAttribute("role", "row");
         row_el.setAttribute("aria-label", "Row " + (ri + 1));
+        row_el.style.display = "contents"; // Invisible to grid — cells flow directly into it
         row_cells.forEach(function (cell, ci) {
             row_el.appendChild(
                 make_cell_el(cell, ri, ci, hit_key, game_over)
@@ -223,10 +266,13 @@ const render_board = function () {
 // Difficulty picker
 // ---------------------------------------------------------------------------
 
+// Shows the difficulty picker overlay. Used both after the intro sequence
+// and when the player starts a new game after losing or winning.
 const show_difficulty_picker = function () {
     const diff_picker = document.getElementById("intro-difficulty");
     const intro_el = document.getElementById("intro");
 
+    // Re-show the intro overlay (without the intro animation elements).
     intro_el.classList.remove("hidden");
     intro_el.style.display = "flex";
 
@@ -244,12 +290,15 @@ const show_difficulty_picker = function () {
 // Status & overlays
 // ---------------------------------------------------------------------------
 
+// Formats elapsed seconds as m:ss — e.g. 75 seconds becomes "1:15".
 const format_time = function (seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins + ":" + String(secs).padStart(2, "0");
 };
 
+// Shows the YOU WIN overlay with the player's time and action buttons.
+// Animates in three stages: text slams in, time rises, then buttons appear.
 const show_win_overlay = function () {
     const existing = document.getElementById("win-overlay");
     if (existing) {
@@ -293,6 +342,7 @@ const show_win_overlay = function () {
         }
     }, 1000);
 
+    // See map — dismiss overlay and show the revealed board.
     document.getElementById("win-see-map").addEventListener(
         "click",
         function () {
@@ -308,6 +358,7 @@ const show_win_overlay = function () {
         }
     );
 
+    // New game — dismiss overlay and show difficulty picker.
     document.getElementById("win-new-game").addEventListener(
         "click",
         function () {
@@ -320,6 +371,8 @@ const show_win_overlay = function () {
     );
 };
 
+// Shows the BOOM overlay on loss with the mine explosion animation,
+// subtitle, and action buttons. Same structure as the win overlay.
 const show_boom_overlay = function () {
     const existing = document.getElementById("boom-overlay");
     if (existing) {
@@ -383,6 +436,8 @@ const show_boom_overlay = function () {
     );
 };
 
+// Updates the game status message displayed between the mine counter and timer.
+// Also triggers the appropriate overlay when the game ends.
 const update_status_display = function () {
     const status = game_state.status;
     status_el.className = "game-status";
@@ -403,6 +458,8 @@ const update_status_display = function () {
 // Event handlers
 // ---------------------------------------------------------------------------
 
+// Handles a left click on a cell. If the cell is already revealed and has
+// a clue, attempts a chord. Otherwise reveals the cell.
 const handle_click = function (row, col) {
     const cell = game_state.grid[row][col];
     if (game_state.status !== "in_play") {
@@ -420,6 +477,7 @@ const handle_click = function (row, col) {
     render_board();
 };
 
+// Handles a right click on a cell — toggles a flag on the cell.
 const handle_right_click = function (row, col) {
     if (game_state.status !== "in_play") {
         return;
@@ -433,6 +491,8 @@ const handle_right_click = function (row, col) {
 // New game
 // ---------------------------------------------------------------------------
 
+// Resets the timer and creates a fresh game using the current difficulty
+// config.
 const start_new_game = function () {
     const admit_btn = document.getElementById("admit-defeat-btn");
     reset_timer();
@@ -450,6 +510,9 @@ const start_new_game = function () {
 // Admit defeat button
 // ---------------------------------------------------------------------------
 
+// The admit defeat button doubles as a "New Game" button after a game ends.
+// In defeat mode: forces a loss by setting status to lost. If no cell has
+// been revealed yet, reveals a random cell first so mines are placed.
 document.getElementById("admit-defeat-btn").addEventListener(
     "click",
     function () {
@@ -467,6 +530,7 @@ document.getElementById("admit-defeat-btn").addEventListener(
             });
         });
         if (is_first_reveal) {
+            // Trigger mine placement by making a reveal before forcing loss.
             const random_row = Math.floor(
                 Math.random() * game_state.tot_rows
             );
@@ -489,6 +553,7 @@ document.getElementById("admit-defeat-btn").addEventListener(
 // Instructions panel
 // ---------------------------------------------------------------------------
 
+// Opens the instructions panel when the "How to play" button is clicked.
 document.getElementById("instructions-btn").addEventListener(
     "click",
     function () {
@@ -498,6 +563,7 @@ document.getElementById("instructions-btn").addEventListener(
     }
 );
 
+// Closes the instructions panel via the ✕ button.
 document.getElementById("instructions-close").addEventListener(
     "click",
     function () {
@@ -508,6 +574,7 @@ document.getElementById("instructions-close").addEventListener(
     }
 );
 
+// Closes the instructions panel when the player presses Escape.
 document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
         const panel = document.getElementById("instructions-panel");
@@ -532,14 +599,14 @@ board_el.addEventListener("keydown", function (event) {
         return;
     }
     if (event.key === "Enter" || event.key === " ") {
-        focused.click();
+        focused.click(); // Trigger the cell's click handler
     }
     if (event.key === "f" || event.key === "F") {
         const row = Math.floor(index / tot_cols);
         const col = index % tot_cols;
         game_state = Minesweeper.flag(row, col, game_state);
         render_board();
-        cells[index].focus();
+        cells[index].focus(); // Restore focus after re-render
     }
     if (event.key === "ArrowLeft" && index > 0) {
         cells[index - 1].focus();
@@ -565,24 +632,29 @@ window.addEventListener("resize", update_cell_size);
 // Boot
 // ---------------------------------------------------------------------------
 
+// Start a default beginner game immediately so the board is visible
+// behind the intro overlay.
 start_new_game();
 
 // ---------------------------------------------------------------------------
 // Intro sequence — runs only on first page load
 // ---------------------------------------------------------------------------
 
+// run_intro animates the welcome screen and difficulty picker.
+// It runs after a short delay to allow the board to render first.
 const run_intro = function () {
     const intro_el = document.getElementById("intro");
     const bombs_el = document.getElementById("intro-bombs");
     const start_btn = document.getElementById("intro-start");
     const request_animation_frame = window.requestAnimationFrame;
     let bomb_count = 0;
-    const max_bombs = 60;
+    const max_bombs = 60; // Total bombs to animate before showing start button
 
     const bomb_interval = setInterval(function () {
         if (bomb_count >= max_bombs) {
             clearInterval(bomb_interval);
             setTimeout(function () {
+                // Fade out the title and bombs, then reveal the start button.
                 bombs_el.style.transition = "opacity 0.8s ease-out";
                 bombs_el.style.opacity = "0";
                 const intro_text = document.getElementById("intro-text");
@@ -601,6 +673,7 @@ const run_intro = function () {
             return;
         }
 
+        // Spawn a falling bomb with random position, size, and speed.
         const bomb = document.createElement("span");
         const duration = 1500 + Math.random() * 1500;
         let start_time = null;
@@ -613,6 +686,7 @@ const run_intro = function () {
 
         bombs_el.appendChild(bomb);
 
+        // Animate the bomb falling using requestAnimationFrame.
         const animate = function (now) {
             if (start_time === null) {
                 start_time = now;
@@ -621,7 +695,7 @@ const run_intro = function () {
                 (now - start_time) / duration,
                 1
             );
-            const eased = progress * progress;
+            const eased = progress * progress; // accelerates as it falls
             const y = -150 + (window.innerHeight + 300) * eased;
             const rotation = progress * 360;
             bomb.style.transform = (
@@ -634,8 +708,10 @@ const run_intro = function () {
 
         request_animation_frame(animate);
         bomb_count += 1;
-    }, 80);
+    }, 80); // Spawn a new bomb every 80ms
 
+    // When the player clicks Start Game, fade it out and show the
+    // difficulty picker.
     start_btn.addEventListener("click", function () {
         start_btn.style.transition = "opacity 0.3s ease-out";
         start_btn.style.opacity = "0";
@@ -652,6 +728,7 @@ const run_intro = function () {
         }, 300);
     });
 
+    // Each difficulty button sets the config and starts the game.
     document.querySelectorAll(".intro-diff-btn").forEach(
         function (btn) {
             btn.addEventListener("click", function () {
@@ -674,4 +751,5 @@ const run_intro = function () {
     );
 };
 
+// Delay the intro sequence slightly so the board renders first.
 setTimeout(run_intro, 2100);

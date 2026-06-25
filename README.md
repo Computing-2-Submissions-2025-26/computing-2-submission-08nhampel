@@ -15,11 +15,10 @@ cells on a grid, using numbered clues to deduce where mines are
 hidden. The goal is to reveal every safe cell without detonating
 a mine.
 
+
 ## Running the game
 1. Install dependencies: `npm install`
-2. Either run from files or
-3. Start the server: `npm start`
-4. Open `http://localhost:3000` in your browser
+2. Open `web-app/index.html` with VS Code Live Server
 
 ## Running the tests
 A set of unit tests were written for the behaviour of the game. Extra property based testing was to further test general rules that must hold ANY valid input.

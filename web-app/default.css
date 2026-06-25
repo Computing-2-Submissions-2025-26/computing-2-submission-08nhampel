@@ -13,7 +13,7 @@
     --bg:            #0e0f0e; /* Near-black background */
     --surface:       #161714; /* Slightly lighter surface for UI elements */
     --board-colour:  #363b30; /* Cell background — olive-dark green */
-    --border:        #2e3128; /* Default border colour */
+    --border:        #494f3b; /* Default border colour */
     --border-hi:     #4a5040; /* Highlighted border, e.g. on hover */
 
     --amber:         #e8a922; /* Primary accent — amber yellow */
@@ -151,7 +151,7 @@ body {
 .subtitle {
     font-family: var(--font-mono);
     font-size: var(--font-size-subtitle);
-    color: var(--text-dim);
+    color: var(--text);
     letter-spacing: var(--letter-spacing-mid);
     margin-top: 0.3rem;
     text-transform: uppercase;
@@ -278,8 +278,8 @@ body {
 
 .board {
     display: grid;
-    gap: var(--gap); /* Gap between cells */
-    /* grid-template-columns set dynamically by JS based on difficulty */
+    row-gap: var(--gap);
+    width: max-content; /* lets the grid be as wide as it needs to be */ 
 }
 
 /* ---------------------------------------------------------
@@ -827,7 +827,7 @@ button:focus-visible {
     letter-spacing: var(--letter-spacing-ui);
     text-transform: uppercase;
     background: var(--bg);
-    color: var(--text-dim);
+    color: var(--text);
     border: 1px solid var(--border-hi);
     padding: 0.4rem 1.2rem;
     border-radius: var(--radius);
