@@ -239,18 +239,24 @@ describe("Revealing cells", function () {
         "\nThen auto-reveal stops at the numbered cells and does not" +
         " go beyond them",
         function () {
-            const game = make_game_with_mines(3, 3, [[0, 0], [2, 2]]);
+            // Board layout (M = mine, numbers = clue values):
+            // M  1  M
+            // 1  2  1
+            // 0  1  0
+            // Revealing (2,0) — clue 0 — cascades to (2,1) and (1,0)
+            // but stops at numbered cells. (0,1) and (0,2) must stay hidden.
+            const game = make_game_with_mines(3, 3, [[0, 0], [0, 2]]);
             const result = Minesweeper.reveal(2, 0, game);
             // These cells are beyond the numbered boundary — must stay hidden
             assert.strictEqual(
-                result.grid[0][2].revealed,
+                result.grid[0][1].revealed,
                 false,
                 "Cell beyond numbered boundary must not be auto-revealed"
             );
             assert.strictEqual(
-                result.grid[0][1].revealed,
+                result.grid[0][2].revealed,
                 false,
-                "Another cell beyond boundary must not be auto-revealed"
+                "Mine cell beyond boundary must not be auto-revealed"
             );
         }
     );
