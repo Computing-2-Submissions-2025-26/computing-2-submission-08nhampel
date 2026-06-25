@@ -73,6 +73,7 @@ Minesweeper.make_cell = function (mine = false) {
  * The grid is populated with unrevealed, mine-free cells.
  * Mines are not placed until the player makes their first move,
  * guaranteeing the first revealed cell is always safe.
+ * The default is the beginner 9 x 9 board with 10 mines.
  * @memberof Minesweeper
  * @function
  * @param {number} [tot_rows=9] - Total no. of rows in the grid.
@@ -266,7 +267,7 @@ Minesweeper.compute_clues = function (grid, tot_rows, tot_cols) {
  * entire field without detonating a mine.
  * @memberof Minesweeper
  * @function
- * @param {Minesweeper.Game} game - The game state to evaluate.
+ * @param {Minesweeper.Game} game - Evaluates whether the game has been won.
  * @returns {boolean} True if all non-mine cells are revealed,
  *     false if any safe cell remains hidden.
  */
@@ -298,7 +299,7 @@ Minesweeper.check_win = function (game) {
  * saving the player from clicking each empty cell individually.
  *
  * The game is unchanged if: the game is already over, the cell is
- * already revealed, or the cell is flagged.
+ * already revealed or the cell is flagged.
  * @memberof Minesweeper
  * @function
  * @param {number} row - Row of the cell to reveal.
@@ -444,8 +445,8 @@ Minesweeper.reveal = function (row, col, game) {
  * a mine, preventing it from being accidentally revealed.
  * Calling flag on an already-flagged cell removes the flag.
  *
- * The game is unchanged if: the game is already over, or the cell
- * is already revealed (revealed cells cannot be flagged).
+ * The game is unchanged if: the game is already won or lost, or the cell
+ * has already been revealed (revealed cells cannot be flagged).
  * @memberof Minesweeper
  * @function
  * @param {number} row - Row of the cell to flag or unflag.
@@ -499,7 +500,7 @@ Minesweeper.flag = function (row, col, game) {
  * @function
  * @param {number} row - Row of the cell to chord.
  * @param {number} col - Column of the cell to chord.
- * @param {Minesweeper.Game} game - The current game state.
+ * @param {Minesweeper.Game} game - Current game state- won, lost or ongoing.
  * @returns {Minesweeper.Game} The updated game state with all
  *     unflagged neighbours revealed. May return a "lost" or "won"
  *     state if revealing neighbours triggers a mine or clears the

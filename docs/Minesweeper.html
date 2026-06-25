@@ -200,7 +200,7 @@ entire field without detonating a mine.</p></li></ul></dd>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line273">line 273</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line274">line 274</a>
     </li></ul></dd>
     
 
@@ -289,7 +289,7 @@ entire field without detonating a mine.</p></li></ul></dd>
 
             
 
-            <td class="description last"><p>The game state to evaluate.</p></td>
+            <td class="description last"><p>Evaluates whether the game has been won.</p></td>
         </tr>
 
     
@@ -369,7 +369,7 @@ flags does not match the clue.</p></li></ul></dd>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line508">line 508</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line509">line 509</a>
     </li></ul></dd>
     
 
@@ -506,7 +506,7 @@ flags does not match the clue.</p></li></ul></dd>
 
             
 
-            <td class="description last"><p>The current game state.</p></td>
+            <td class="description last"><p>Current game state- won, lost or ongoing.</p></td>
         </tr>
 
     
@@ -582,7 +582,7 @@ direct use by callers.</p></li></ul></dd>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line241">line 241</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line242">line 242</a>
     </li></ul></dd>
     
 
@@ -788,14 +788,14 @@ has its clue property set to the correct mine-neighbour count.</p>
 Flagging allows the player to mark a cell they suspect contains
 a mine, preventing it from being accidentally revealed.
 Calling flag on an already-flagged cell removes the flag.</p>
-<p>The game is unchanged if: the game is already over, or the cell
-is already revealed (revealed cells cannot be flagged).</p></li></ul></dd>
+<p>The game is unchanged if: the game is already won or lost, or the cell
+has already been revealed (revealed cells cannot be flagged).</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line458">line 458</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line459">line 459</a>
     </li></ul></dd>
     
 
@@ -1007,7 +1007,7 @@ determine which cells are adjacent to a given cell.</p></li></ul></dd>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line128">line 128</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line129">line 129</a>
     </li></ul></dd>
     
 
@@ -1413,13 +1413,14 @@ one for each valid neighbouring cell.</p>
     <dd class="tag-description"><ul class="dummy"><li><p>Creates a new game in its initial state, before any moves are made.
 The grid is populated with unrevealed, mine-free cells.
 Mines are not placed until the player makes their first move,
-guaranteeing the first revealed cell is always safe.</p></li></ul></dd>
+guaranteeing the first revealed cell is always safe.
+The default is the beginner 9 x 9 board with 10 mines.</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line85">line 85</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line86">line 86</a>
     </li></ul></dd>
     
 
@@ -1682,7 +1683,7 @@ use by callers.</p></li></ul></dd>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line168">line 168</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line169">line 169</a>
     </li></ul></dd>
     
 
@@ -1941,13 +1942,13 @@ mine is marked as revealed so the UI can show where it was.</p>
 connected safe cells are revealed automatically in a cascade —
 saving the player from clicking each empty cell individually.</p>
 <p>The game is unchanged if: the game is already over, the cell is
-already revealed, or the cell is flagged.</p></li></ul></dd>
+already revealed or the cell is flagged.</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line311">line 311</a>
+        <a href="minesweeper.js.html">minesweeper.js</a>, <a href="minesweeper.js.html#line312">line 312</a>
     </li></ul></dd>
     
 
@@ -2687,7 +2688,7 @@ indexed as grid[row][col].</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Jun 25 2026 12:35:58 GMT+0100 (British Summer Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Jun 25 2026 13:15:05 GMT+0100 (British Summer Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
