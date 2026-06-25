@@ -247,7 +247,7 @@ const render_board = function () {
         const row_el = document.createElement("div");
         row_el.setAttribute("role", "row");
         row_el.setAttribute("aria-label", "Row " + (ri + 1));
-        row_el.style.display = "contents"; // Invisible to grid — cells flow directly into it
+        row_el.style.display = "contents"; // Invisible - cells flow in directly
         row_cells.forEach(function (cell, ci) {
             row_el.appendChild(
                 make_cell_el(cell, ri, ci, hit_key, game_over)
