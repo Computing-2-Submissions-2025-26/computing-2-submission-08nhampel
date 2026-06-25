@@ -18,24 +18,33 @@ import assert from "assert";
 // mines, we pre-reveal the bottom-right cell (provided it is not a mine)
 // as a dummy "already played" marker. This makes reveal treat subsequent
 // clicks as mid-game moves rather than a first reveal.
+//
+// Usage: make_game_with_mines(3, 3, [[0, 0], [1, 1]])
+// Creates a 3x3 grid with mines at row 0 col 0, and row 1 col 1.
 // ---------------------------------------------------------------------------
 
 const make_game_with_mines = function (tot_rows, tot_cols, mine_positions) {
+    // Convert [row, col] positions to flat indices for fast lookup.
     const mine_set = new Set(
         mine_positions.map(function (pos) {
             return pos[0] * tot_cols + pos[1];
         })
     );
+    // Build the grid — each cell is mine or safe based on the set above.
     const grid = Array.from({length: tot_rows}, function (ignore, r) {
         return Array.from({length: tot_cols}, function (ignore, c) {
             return Minesweeper.make_cell(mine_set.has(r * tot_cols + c));
         });
     });
+    // Compute clue numbers for all non-mine cells.
     const grid_with_clues = Minesweeper.compute_clues(
         grid,
         tot_rows,
         tot_cols
     );
+    // Pre-reveal the bottom-right cell as a dummy move marker,
+    // provided it is not a mine. This prevents reveal from treating
+    // subsequent calls as a first move and re-placing mines.
     const grid_with_dummy = grid_with_clues.map(function (row_cells, ri) {
         return row_cells.map(function (cell, ci) {
             if (ri === tot_rows - 1 && ci === tot_cols - 1 && !cell.mine) {
@@ -59,6 +68,9 @@ const make_game_with_mines = function (tot_rows, tot_cols, mine_positions) {
 
 describe("First click safety", function () {
 
+    // Repeated 20 times to account for randomness in mine placement.
+    // A single run could pass by luck; 20 runs make accidental passing
+    // extremely unlikely.
     it(
         "Given a fresh game that has not been played," +
         "\nWhen the player reveals any cell for the first time," +
@@ -78,6 +90,8 @@ describe("First click safety", function () {
         }
     );
 
+    // Checks the revealed cell AND all 8 neighbours are mine-free.
+    // This verifies the safe zone guarantee — not just the clicked cell.
     it(
         "Given a fresh game that has not been played," +
         "\nWhen the player makes their first reveal," +
@@ -109,6 +123,7 @@ describe("First click safety", function () {
 
 describe("Revealing cells", function () {
 
+    // Verifies the game ends immediately when a mine is revealed.
     it(
         "Given a game in play with a mine at a known position," +
         "\nWhen the player reveals that mine cell," +
@@ -124,6 +139,8 @@ describe("Revealing cells", function () {
         }
     );
 
+    // Verifies the mine cell itself is marked revealed so the UI
+    // can display the bomb emoji on it.
     it(
         "Given a game in play with a mine at a known position," +
         "\nWhen the player reveals that mine cell," +
@@ -139,6 +156,7 @@ describe("Revealing cells", function () {
         }
     );
 
+    // Basic reveal — verifies a safe cell transitions to revealed.
     it(
         "Given a game in play with a safe cell at a known position," +
         "\nWhen the player reveals that cell," +
@@ -154,6 +172,9 @@ describe("Revealing cells", function () {
         }
     );
 
+    // Verifies idempotency — revealing the same cell twice is harmless.
+    // Uses deepStrictEqual to check the entire game state is unchanged,
+    // not just the one cell.
     it(
         "Given a game in play with a cell already revealed," +
         "\nWhen the player reveals that same cell again," +
@@ -170,6 +191,8 @@ describe("Revealing cells", function () {
         }
     );
 
+    // Verifies the game is locked after it ends — no further reveals
+    // should change any cell state.
     it(
         "Given a game that has already ended," +
         "\nWhen the player attempts to reveal another cell," +
@@ -186,6 +209,8 @@ describe("Revealing cells", function () {
         }
     );
 
+    // Verifies cascade — revealing an empty cell (0 mine neighbours)
+    // should automatically reveal all its neighbours too.
     it(
         "Given a game in play where a cell has no mine neighbours," +
         "\nWhen the player reveals that empty cell," +
@@ -204,6 +229,9 @@ describe("Revealing cells", function () {
         }
     );
 
+    // Verifies cascade stops correctly — cells beyond a numbered cell
+    // (one that has mine neighbours) must NOT be auto-revealed.
+    // Two cells are checked to make the boundary more robust.
     it(
         "Given a game in play where an empty cell is surrounded by" +
         " numbered cells," +
@@ -213,10 +241,16 @@ describe("Revealing cells", function () {
         function () {
             const game = make_game_with_mines(3, 3, [[0, 0], [2, 2]]);
             const result = Minesweeper.reveal(2, 0, game);
+            // These cells are beyond the numbered boundary — must stay hidden
             assert.strictEqual(
                 result.grid[0][2].revealed,
                 false,
-                "Auto-reveal should not go beyond numbered boundary cells"
+                "Cell beyond numbered boundary must not be auto-revealed"
+            );
+            assert.strictEqual(
+                result.grid[0][1].revealed,
+                false,
+                "Another cell beyond boundary must not be auto-revealed"
             );
         }
     );
@@ -229,6 +263,7 @@ describe("Revealing cells", function () {
 
 describe("Flagging cells", function () {
 
+    // Basic flag — verifies an unrevealed cell can be flagged.
     it(
         "Given a game in play with an unrevealed cell," +
         "\nWhen the player flags that cell," +
@@ -244,6 +279,7 @@ describe("Flagging cells", function () {
         }
     );
 
+    // Verifies the toggle — flagging the same cell twice removes the flag.
     it(
         "Given a game in play with a flagged cell," +
         "\nWhen the player flags that same cell again," +
@@ -260,6 +296,8 @@ describe("Flagging cells", function () {
         }
     );
 
+    // Verifies flags protect cells — a flagged mine cell should not
+    // be accidentally revealed if the player clicks it.
     it(
         "Given a game in play with a flagged cell," +
         "\nWhen the player tries to reveal that flagged cell," +
@@ -276,6 +314,8 @@ describe("Flagging cells", function () {
         }
     );
 
+    // Verifies revealed cells cannot be flagged — once uncovered
+    // a cell is committed and cannot be marked with a flag.
     it(
         "Given a game in play with a revealed cell," +
         "\nWhen the player tries to flag that revealed cell," +
@@ -292,6 +332,8 @@ describe("Flagging cells", function () {
         }
     );
 
+    // Verifies the game is locked after it ends — no flags should
+    // be placeable once the game is over.
     it(
         "Given a game that has already ended," +
         "\nWhen the player tries to flag a cell," +
@@ -317,6 +359,7 @@ describe("Flagging cells", function () {
 
 describe("Win condition", function () {
 
+    // Verifies the starting state is not won — no cells revealed yet.
     it(
         "Given a fresh game that has not been played," +
         "\nWhen we check if the game is won," +
@@ -331,6 +374,8 @@ describe("Win condition", function () {
         }
     );
 
+    // Verifies the win condition triggers correctly by revealing every
+    // safe cell one by one on a minimal 2x2 board with one mine.
     it(
         "Given a game in play where only mine cells remain hidden," +
         "\nWhen the player reveals the last safe cell," +
@@ -347,6 +392,7 @@ describe("Win condition", function () {
         }
     );
 
+    // Verifies the game is not prematurely won while safe cells remain.
     it(
         "Given a game in play where some safe cells are still hidden," +
         "\nWhen we check if the game is won," +
@@ -364,17 +410,29 @@ describe("Win condition", function () {
         }
     );
 
+    // Verifies flags alone do not trigger a win. A safe cell is revealed
+    // first to place mines, then the mine is flagged. The two assertions
+    // confirm: (a) the flag was actually placed, and (b) status is still
+    // in_play — so we know the flag is what was tested, not a no-op.
     it(
         "Given a game in play with mines on the board," +
         "\nWhen the player flags all the mines but reveals no cells," +
         "\nThen the game is not won — flags alone cannot win the game",
         function () {
             const game = make_game_with_mines(2, 2, [[0, 0]]);
-            const result = Minesweeper.flag(0, 0, game);
+            // Reveal a safe cell first so mines are placed, then flag
+            // the mine. All mines are flagged but safe cells unrevealed.
+            const after_reveal = Minesweeper.reveal(0, 1, game);
+            const result = Minesweeper.flag(0, 0, after_reveal);
+            assert.strictEqual(
+                result.grid[0][0].flagged,
+                true,
+                "Mine should be flagged — confirms the flag operation ran"
+            );
             assert.strictEqual(
                 result.status,
                 "in_play",
-                "Flagging mines alone should not win the game"
+                "Flagging all mines should not win — must reveal safe cells"
             );
         }
     );
@@ -387,6 +445,10 @@ describe("Win condition", function () {
 
 describe("Chord", function () {
 
+    // Verifies chord does nothing when the flag count does not yet match
+    // the cell's number. Checks two specific neighbours directly as well
+    // as the full game state — so a buggy chord that only partially
+    // reveals would still be caught.
     it(
         "Given a revealed numbered cell with fewer flags around it" +
         " than its number indicates," +
@@ -397,14 +459,27 @@ describe("Chord", function () {
             const game = make_game_with_mines(3, 3, [[0, 0], [1, 1]]);
             const revealed = Minesweeper.reveal(0, 1, game);
             const result = Minesweeper.chord(0, 1, revealed);
+            // Verify the specific neighbours were not revealed
+            assert.strictEqual(
+                result.grid[0][2].revealed,
+                false,
+                "Unflagged neighbour should not be revealed by chord"
+            );
+            assert.strictEqual(
+                result.grid[1][2].revealed,
+                false,
+                "Another neighbour should not be revealed by chord"
+            );
             assert.deepStrictEqual(
                 result,
                 revealed,
-                "Chord should do nothing if flags do not match the clue"
+                "Chord should return the game completely unchanged"
             );
         }
     );
 
+    // Verifies the happy path — correct flag placement triggers chord
+    // and reveals the remaining neighbours.
     it(
         "Given a revealed numbered cell with exactly the right number" +
         " of flags placed around it," +
@@ -424,6 +499,8 @@ describe("Chord", function () {
         }
     );
 
+    // Verifies chord is a no-op on unrevealed cells — it only applies
+    // to already-revealed numbered cells.
     it(
         "Given an unrevealed cell," +
         "\nWhen the player tries to chord that cell," +
@@ -440,12 +517,18 @@ describe("Chord", function () {
         }
     );
 
+    // Verifies the dangerous chord case — if the player misplaces a flag
+    // on a safe cell and chords, the actual mine gets revealed and the
+    // game is lost. This is valid game behaviour, not a bug.
     it(
         "Given a revealed numbered cell where a flag has been placed" +
         " on a safe cell by mistake," +
         "\nWhen the player clicks that number to auto-reveal neighbours," +
         "\nThen the actual mine is revealed and the game is lost",
         function () {
+            // Mine at (0,0) only. Cell (0,1) has clue 1.
+            // Player flags (0,2) by mistake instead of (0,0), then
+            // chords (0,1). This reveals (0,0) — the actual mine.
             const game = make_game_with_mines(3, 3, [[0, 0]]);
             const revealed = Minesweeper.reveal(0, 1, game);
             const wrong_flag = Minesweeper.flag(0, 2, revealed);
